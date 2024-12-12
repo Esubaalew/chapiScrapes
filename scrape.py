@@ -43,33 +43,41 @@ def get_categories_from_page(page_source):
 
 
 
+
 def get_category_page_source(category_name, categories, sort_by="Featured"):
     """
-    Fetches the page source for the specified category, handling pagination and sorting.
+    Fetches the page source for the specified category, handling pagination, sorting, and subcategories.
 
     :param category_name: Name of the category to fetch.
     :param categories: List of categories from get_categories_from_page function.
     :param sort_by: Sorting option (default is "Featured").
-    :return: Page source of the category page, or None if not found.
+    :return: Page source of the category page, subcategories, and product details.
     """
     
     category = next((cat for cat in categories if cat['name'].lower() == category_name.lower()), None)
     
     if not category:
         print(f"Category '{category_name}' not found.")
-        return None
-    
+        return None, []
     
     driver = webdriver.Chrome()
     driver.get(category['url'])
     
-
+    
     if "Choose a country" in driver.page_source:
         usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
         usa_button.click()
         driver.refresh()
+
+   # Check for subcategories (if found, break as it's a subcategory)
+    if driver.find_elements(By.CSS_SELECTOR, 'li.crumb-list-item a.crumb[href^="https://www.bestbuy.com/"]'):
+        print(f"Subcategory found for '{category_name}', terminating.")
+        driver.quit()
+        return None
+
+      
     
-   
+    # Sort dropdown and fetch products
     sort_dropdown = driver.find_element(By.ID, 'sort-by-select')
     sort_dropdown.click()
     sort_option = driver.find_element(By.CSS_SELECTOR, f'option[value="{sort_by}"]')
@@ -78,8 +86,8 @@ def get_category_page_source(category_name, categories, sort_by="Featured"):
 
     page_source = driver.page_source
     products = []
-    
-    # pagination
+
+    # Handle pagination
     while True:
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         items_on_page = soup.select('li.sku-item')
@@ -99,7 +107,6 @@ def get_category_page_source(category_name, categories, sort_by="Featured"):
                     'price': price_tag.text.strip()
                 })
 
-        
         next_page = soup.select_one('a.sku-list-page-next')
         if not next_page or 'disabled' in next_page.get('class', []):
             break
@@ -115,8 +122,9 @@ def get_category_page_source(category_name, categories, sort_by="Featured"):
 
     return {
         'total_items': total_items,
-        'products': products
+        'products': products,
     }
+
 
 
 
@@ -125,8 +133,8 @@ page_source = navigate_to_usa_page()
 categories = get_categories_from_page(page_source)
 
 # Fetch page source for a specific category
-category_name = "Tablets & E-Readers"
-category_page_source = get_category_page_source(category_name, categories, sort_by="Price Low to High")
+category_name = "Apple"
+category_page_source = get_category_page_source(category_name, categories)
 
 if category_page_source:
     product_details = category_page_source
