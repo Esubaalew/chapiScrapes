@@ -41,9 +41,47 @@ def get_categories_from_page(page_source):
 
 
 
+def get_category_page_source(category_name, categories):
+    """
+    Fetches the page source for the specified category.
+
+    :param category_name: Name of the category to fetch.
+    :param categories: List of categories from get_categories_from_page function.
+    :return: Page source of the category page, or None if not found.
+    """
+    # Find the category in the list
+    category = next((cat for cat in categories if cat['name'].lower() == category_name.lower()), None)
+    
+    if not category:
+        print(f"Category '{category_name}' not found.")
+        return None
+    
+    # Open the link and fetch the page source
+    driver = webdriver.Chrome()
+    driver.get(category['url'])
+    if "Choose a country" in driver.page_source:
+        usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
+        usa_button.click()
+    page_source = driver.page_source
+    driver.quit()
+    return page_source
+
+# page_source = navigate_to_usa_page()
+# categories = get_categories_from_page(page_source)
+
+# print("Categories found:")
+# for category in categories:
+#     print(category)
+
 page_source = navigate_to_usa_page()
 categories = get_categories_from_page(page_source)
 
-print("Categories found:")
-for category in categories:
-    print(category)
+# Fetch the page source for a specific category
+category_name = "Laptops & Computers"
+category_page_source = get_category_page_source(category_name, categories)
+
+if category_page_source:
+    print(f"Page source for {category_name} fetched successfully.")
+    print(category_page_source)
+else:
+    print(f"Could not fetch page source for {category_name}.")
