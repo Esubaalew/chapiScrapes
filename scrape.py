@@ -5,6 +5,8 @@ from bs4 import BeautifulSoup
 URL = 'https://www.bestbuy.com'
 
 def navigate_to_usa_page():
+    """ Navigate to the Best Buy USA page and return the page source"""
+
     driver = webdriver.Chrome()
     driver.get(URL)
     if "Choose a country" in driver.page_source:
@@ -21,7 +23,7 @@ def get_categories_from_page(page_source):
     categories = []
 
     for item in soup.select('li.c-carousel-item'):
-        # Exclude items containing product-specific details like ratings
+
         if item.select_one('.product-rating'):
             continue
         
@@ -43,7 +45,7 @@ def get_categories_from_page(page_source):
 
 def get_category_page_source(category_name, categories):
     """
-    Fetches the page source for the specified category.
+    Fetches the page source for the specified category, handling pagination.
 
     :param category_name: Name of the category to fetch.
     :param categories: List of categories from get_categories_from_page function.
@@ -59,28 +61,44 @@ def get_category_page_source(category_name, categories):
     # Open the link and fetch the page source
     driver = webdriver.Chrome()
     driver.get(category['url'])
-    if "Choose a country" in driver.page_source:
-        usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
-        usa_button.click()
     page_source = driver.page_source
-    driver.quit()
-
-    # Parse the page source and extract products
-    soup = BeautifulSoup(page_source, 'html.parser')
+    
     products = []
+    # Handle pagination and "Choose a country" check
+    while True:
+        if "Choose a country" in driver.page_source:
+            usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
+            usa_button.click()
+            driver.refresh()
+        
+        soup = BeautifulSoup(driver.page_source, 'html.parser')
+        items_on_page = soup.select('li.sku-item')
 
-    for item in soup.select('li.sku-item'):
-        name_tag = item.select_one('h4.sku-title a')
-        image_tag = item.select_one('img.product-image')
-        price_tag = item.select_one('div.priceView-hero-price span')
+        if not items_on_page:
+            break
+        
+        for item in items_on_page:
+            name_tag = item.select_one('h4.sku-title a')
+            image_tag = item.select_one('img.product-image')
+            price_tag = item.select_one('div.priceView-hero-price span')
 
-        if name_tag and image_tag and price_tag:
-            products.append({
-                'name': name_tag.text.strip(),
-                'photo': image_tag['src'],
-                'price': price_tag.text.strip()
-            })
+            if name_tag and image_tag and price_tag:
+                products.append({
+                    'name': name_tag.text.strip(),
+                    'photo': image_tag['src'],
+                    'price': price_tag.text.strip()
+                })
 
+        # Check if pagination next page exists
+        next_page = soup.select_one('a.sku-list-page-next')
+        if not next_page or 'disabled' in next_page.get('class', []):
+            break
+
+        next_page_url = URL + next_page['href']
+        driver.get(next_page_url)
+    
+    driver.quit()
+    
     # Extract total item count
     total_count_tag = soup.select_one('span.item-count')
     total_items = total_count_tag.text.strip() if total_count_tag else "Unknown"
@@ -89,6 +107,7 @@ def get_category_page_source(category_name, categories):
         'total_items': total_items,
         'products': products
     }
+
 
 
 # Example
