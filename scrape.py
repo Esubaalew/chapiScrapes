@@ -43,34 +43,44 @@ def get_categories_from_page(page_source):
 
 
 
-def get_category_page_source(category_name, categories):
+def get_category_page_source(category_name, categories, sort_by="Featured"):
     """
-    Fetches the page source for the specified category, handling pagination.
+    Fetches the page source for the specified category, handling pagination and sorting.
 
     :param category_name: Name of the category to fetch.
     :param categories: List of categories from get_categories_from_page function.
+    :param sort_by: Sorting option (default is "Featured").
     :return: Page source of the category page, or None if not found.
     """
-    # Find the category in the list
+    
     category = next((cat for cat in categories if cat['name'].lower() == category_name.lower()), None)
     
     if not category:
         print(f"Category '{category_name}' not found.")
         return None
     
-    # Open the link and fetch the page source
+    
     driver = webdriver.Chrome()
     driver.get(category['url'])
-    page_source = driver.page_source
     
+
+    if "Choose a country" in driver.page_source:
+        usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
+        usa_button.click()
+        driver.refresh()
+    
+   
+    sort_dropdown = driver.find_element(By.ID, 'sort-by-select')
+    sort_dropdown.click()
+    sort_option = driver.find_element(By.CSS_SELECTOR, f'option[value="{sort_by}"]')
+    sort_option.click()
+    driver.refresh()
+
+    page_source = driver.page_source
     products = []
-    # Handle pagination and "Choose a country" check
+    
+    # pagination
     while True:
-        if "Choose a country" in driver.page_source:
-            usa_button = driver.find_element(By.CSS_SELECTOR, 'a.us-link')
-            usa_button.click()
-            driver.refresh()
-        
         soup = BeautifulSoup(driver.page_source, 'html.parser')
         items_on_page = soup.select('li.sku-item')
 
@@ -89,7 +99,7 @@ def get_category_page_source(category_name, categories):
                     'price': price_tag.text.strip()
                 })
 
-        # Check if pagination next page exists
+        
         next_page = soup.select_one('a.sku-list-page-next')
         if not next_page or 'disabled' in next_page.get('class', []):
             break
@@ -116,7 +126,7 @@ categories = get_categories_from_page(page_source)
 
 # Fetch page source for a specific category
 category_name = "Tablets & E-Readers"
-category_page_source = get_category_page_source(category_name, categories)
+category_page_source = get_category_page_source(category_name, categories, sort_by="Price Low to High")
 
 if category_page_source:
     product_details = category_page_source
