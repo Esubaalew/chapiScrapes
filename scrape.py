@@ -44,6 +44,7 @@ def get_categories_from_page(page_source):
 
 
 
+
 def get_category_page_source(category_name, categories, sort_by="Featured"):
     """
     Fetches the page source for the specified category, handling pagination, sorting, and subcategories.
@@ -133,7 +134,7 @@ page_source = navigate_to_usa_page()
 categories = get_categories_from_page(page_source)
 
 # Fetch page source for a specific category
-category_name = "Apple"
+category_name = ""
 category_page_source = get_category_page_source(category_name, categories)
 
 if category_page_source:
@@ -143,3 +144,5 @@ if category_page_source:
         print(product)
 else:
     print(f"Could not fetch page source for {category_name}.")
+
+
