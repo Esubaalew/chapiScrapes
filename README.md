@@ -84,3 +84,50 @@ print(categories)
 
 category_data = get_category_page_source("Apple", categories)
 print(category_data)
+
+
+
+
+
+# Best Buy Categories and Code Example
+
+## Extracted Categories
+**Total Categories: 26**  
+- Laptops & Computers  
+- TVs & Projectors  
+- Apple  
+- Video Games, VR & Collectibles  
+- Major Appliances  
+- Exclusive Member Deals  
+- Wearable Technology  
+- Electric Transportation  
+- Outdoor Living  
+- Headphones  
+- PC Gaming  
+- Sound Bars, Bluetooth Speakers & Home Audio  
+- Cell Phones & Accessories  
+- Small Kitchen Appliances  
+- Tablets & E-Readers  
+- Cameras, Camcorders & Drones  
+- Floor Care & Home Air Quality  
+- Best Buy Outlet  
+- Car Electronics & GPS  
+- Collectibles & Toys  
+- Personal Care & Beauty  
+- Furniture  
+- Printers, Home Office & Computer Accessories  
+- Smart Home, Security & Wi-Fi  
+- Health, Fitness & Recovery  
+- Yes, Best Buy Sells That  
+
+---
+
+## Code to Fetch and Print Categories
+
+```python
+page_source = navigate_to_usa_page()
+categories = get_categories_from_page(page_source)
+
+print(f"Total categories: {len(categories)}")
+for category in categories:
+    print(category['name'])

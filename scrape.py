@@ -134,7 +134,7 @@ page_source = navigate_to_usa_page()
 categories = get_categories_from_page(page_source)
 
 # Fetch page source for a specific category
-category_name = ""
+category_name = "Tablets & E-Readers"
 category_page_source = get_category_page_source(category_name, categories)
 
 if category_page_source:
